@@ -21,13 +21,17 @@
 #define RCC_AHB2ENR (uint32_t*)0x44020C8C
 #define GPIOA_MODER (uint32_t*)0x42020000
 #define GPIOB_MODER (uint32_t*)0x42020400
+#define GPIOD_MODER (uint32_t*)0x42020C00
 #define GPIOE_MODER (uint32_t*)0x42021000
+#define GPIOF_MODER (uint32_t*)0x42021400
 #define GPIOG_MODER (uint32_t*)0x42021800
 
 #define GPIOA_ODR (uint32_t*)0x42020014
 #define GPIOB_ODR (uint32_t*)0x42020414
-#define GPIOG_ODR (uint32_t*)0x42021814
+#define GPIOD_ODR (uint32_t*)0x42020C14
 #define GPIOE_ODR (uint32_t*)0x42021014
+#define GPIOF_ODR (uint32_t*)0x42021414
+#define GPIOG_ODR (uint32_t*)0x42021814
 
 #define GPIOE_IDR (uint32_t*)0x42021010
 #define GPIOG_IDR (uint32_t*)0x42021810
@@ -35,9 +39,54 @@
 #define GPIOE_PUPDR (uint32_t*)0x4202100C
 #define GPIOG_PUPDR (uint32_t*)0x4202180C
 
-void keypad_init() {}
+void keypad_init() {
+	*RCC_AHB2ENR |= (1 << 0);
+	*RCC_AHB2ENR |= (1 << 1);
+	*RCC_AHB2ENR |= (1 << 4);
+	*RCC_AHB2ENR |= (1 << 6);
 
-void LCD_init() {}
+	*GPIOA_MODER &= ~(0x3 << 12);
+	*GPIOA_MODER |= (1 << 12);
+
+	*GPIOB_MODER &= ~(0xF << 12);
+	*GPIOB_MODER |= (0x5 << 12);
+	*GPIOG_MODER &= ~(0x3 << 28);
+	*GPIOG_MODER |= (1 << 28);
+	*GPIOE_MODER &= ~(0x3 << 26);
+	*GPIOE_MODER |= (1 << 26);
+
+	*GPIOE_MODER &= ~(0x3 << 28);
+	*GPIOE_MODER &= ~(0x3 << 22);
+	*GPIOE_MODER &= ~(0x3 << 18);
+	*GPIOG_MODER &= ~(0x3 << 24);
+
+	*GPIOE_PUPDR &= ~(0x3 << 28);
+	*GPIOE_PUPDR |= (1 << 29);
+	*GPIOE_PUPDR &= ~(0x3 << 22);
+	*GPIOE_PUPDR |= (1 << 23);
+	*GPIOE_PUPDR &= ~(0x3 << 18);
+	*GPIOE_PUPDR |= (1 << 19);
+	*GPIOG_PUPDR &= ~(0x3 << 24);
+	*GPIOG_PUPDR |= (1 << 25);
+}
+
+void LCD_init() {
+	*RCC_AHB2ENR |= (1 << 3);
+	*RCC_AHB2ENR |= (1 << 5);
+
+	*GPIOF_MODER &= ~(0x3 << 6);
+	*GPIOF_MODER |= (1 << 6);
+	*GPIOD_MODER &= ~(0xF << 28);
+	*GPIOD_MODER |= (0x5 << 28);
+	*GPIOB_MODER &= ~(0x3 << 10);
+	*GPIOB_MODER |= (1 << 10);
+	*GPIOG_MODER &= ~(0x3 << 18);
+	*GPIOG_MODER |= (1 << 18);
+	*GPIOA_MODER &= ~(0x3 << 10);
+	*GPIOA_MDOER |= (1 << 10);
+	*GPIOB_MODER &= ~(0xF << 16);
+	*GPIOB_MODER |= (0x5 << 16);
+}
 
 char keypad_response() {
 	// First Row | 1 | 2 | 3 | A |
@@ -92,7 +141,7 @@ char keypad_response() {
 	}
 	*GPIOE_ODR &= ~(1 << 13);
 
-	return ' ';
+	return '';
 }
 
 void blink_n_times(int n) {
@@ -107,35 +156,8 @@ void blink_n_times(int n) {
 
 int main(void)
 {
-	// Pin Initialization
-	*RCC_AHB2ENR |= (1 << 0);
-	*RCC_AHB2ENR |= (1 << 1);
-	*RCC_AHB2ENR |= (1 << 4);
-	*RCC_AHB2ENR |= (1 << 6);
-
-	*GPIOA_MODER &= ~(0x3 << 12);
-	*GPIOA_MODER |= (1 << 12);
-
-	*GPIOB_MODER &= ~(0xF << 12);
-	*GPIOB_MODER |= (0x5 << 12);
-	*GPIOG_MODER &= ~(0x3 << 28);
-	*GPIOG_MODER |= (1 << 28);
-	*GPIOE_MODER &= ~(0x3 << 26);
-	*GPIOE_MODER |= (1 << 26);
-
-	*GPIOE_MODER &= ~(0x3 << 28);
-	*GPIOE_MODER &= ~(0x3 << 22);
-	*GPIOE_MODER &= ~(0x3 << 18);
-	*GPIOG_MODER &= ~(0x3 << 24);
-
-	*GPIOE_PUPDR &= ~(0x3 << 28);
-	*GPIOE_PUPDR |= (1 << 29);
-	*GPIOE_PUPDR &= ~(0x3 << 22);
-	*GPIOE_PUPDR |= (1 << 23);
-	*GPIOE_PUPDR &= ~(0x3 << 18);
-	*GPIOE_PUPDR |= (1 << 19);
-	*GPIOG_PUPDR &= ~(0x3 << 24);
-	*GPIOG_PUPDR |= (1 << 25);
+	keypad_init();
+	LCD_init();
 
 	for(;;) {
 		char result = keypad_response();
