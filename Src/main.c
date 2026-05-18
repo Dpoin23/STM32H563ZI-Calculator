@@ -39,6 +39,62 @@ void keypad_init() {}
 
 void LCD_init() {}
 
+char keypad_response() {
+	// First Row | 1 | 2 | 3 | A |
+	*GPIOB_ODR |= (1 << 7);
+	if (*GPIOE_IDR & (1 << 14)) {
+		return '1';
+	} else if (*GPIOE_IDR & (1 << 11)) {
+		return '2';
+	} else if (*GPIOE_IDR & (1 << 9)) {
+		return '3';
+	} else if (*GPIOG_IDR & (1 << 12)) {
+		return 'A';
+	}
+	*GPIOB_ODR &= ~(1 << 7);
+
+	// Second Row | 4 | 5 | 6 | B |
+	*GPIOB_ODR |= (1 << 6);
+	if (*GPIOE_IDR & (1 << 14)) {
+		return '4';
+	} else if (*GPIOE_IDR & (1 << 11)) {
+		return '5';
+	} else if (*GPIOE_IDR & (1 << 9)) {
+		return '6';
+	} else if (*GPIOG_IDR & (1 << 12)) {
+		return 'B';
+	}
+	*GPIOB_ODR &= ~(1 << 6);
+
+	// Third Row | 7 | 8 | 9 | C |
+	*GPIOG_ODR |= (1 << 14);
+	if (*GPIOE_IDR & (1 << 14)) {
+		return '7';
+	} else if (*GPIOE_IDR & (1 << 11)) {
+		return '8';
+	} else if (*GPIOE_IDR & (1 << 9)) {
+		return '9';
+	} else if (*GPIOG_IDR & (1 << 12)) {
+		return 'C';
+	}
+	*GPIOG_ODR &= ~(1 << 14);
+
+	// Fourth Row | * | 0 | # | D |
+	*GPIOE_ODR |= (1 << 13);
+	if (*GPIOE_IDR & (1 << 14)) {
+		return '*';
+	} else if (*GPIOE_IDR & (1 << 11)) {
+		return '0';
+	} else if (*GPIOE_IDR & (1 << 9)) {
+		return '#';
+	} else if (*GPIOG_IDR & (1 << 12)) {
+		return 'D';
+	}
+	*GPIOE_ODR &= ~(1 << 13);
+
+	return ' ';
+}
+
 void blink_n_times(int n) {
 	for (int i = 0; i < n; ++i) {
 		*GPIOA_ODR |= (1 << 6);
@@ -51,6 +107,7 @@ void blink_n_times(int n) {
 
 int main(void)
 {
+	// Pin Initialization
 	*RCC_AHB2ENR |= (1 << 0);
 	*RCC_AHB2ENR |= (1 << 1);
 	*RCC_AHB2ENR |= (1 << 4);
@@ -80,55 +137,11 @@ int main(void)
 	*GPIOG_PUPDR &= ~(0x3 << 24);
 	*GPIOG_PUPDR |= (1 << 25);
 
-
 	for(;;) {
-		*GPIOB_ODR |= (1 << 7);
-		if (*GPIOE_IDR & (1 << 14)) {
-
-		} else if (*GPIOE_IDR & (1 << 11)) {
-
-		} else if (*GPIOE_IDR & (1 << 9)) {
-
-		} else if (*GPIOG_IDR & (1 << 12)) {
-
+		char result = keypad_response();
+		if (result == '#') {
+			blink_n_times(5);
 		}
-		*GPIOB_ODR &= ~(1 << 7);
-
-		*GPIOB_ODR |= (1 << 6);
-		if (*GPIOE_IDR & (1 << 14)) {
-
-		} else if (*GPIOE_IDR & (1 << 11)) {
-
-		} else if (*GPIOE_IDR & (1 << 9)) {
-
-		} else if (*GPIOG_IDR & (1 << 12)) {
-
-		}
-		*GPIOB_ODR &= ~(1 << 6);
-
-		*GPIOG_ODR |= (1 << 14);
-		if (*GPIOE_IDR & (1 << 14)) {
-
-		} else if (*GPIOE_IDR & (1 << 11)) {
-
-		} else if (*GPIOE_IDR & (1 << 9)) {
-
-		} else if (*GPIOG_IDR & (1 << 12)) {
-
-		}
-		*GPIOG_ODR &= ~(1 << 14);
-
-		*GPIOE_ODR |= (1 << 13);
-		if (*GPIOE_IDR & (1 << 14)) {
-			blink_n_times(1);
-		} else if (*GPIOE_IDR & (1 << 11)) {
-			blink_n_times(2);
-		} else if (*GPIOE_IDR & (1 << 9)) {
-			blink_n_times(3);
-		} else if (*GPIOG_IDR & (1 << 12)) {
-			blink_n_times(4);
-		}
-		*GPIOE_ODR &= ~(1 << 13);
 	}
 
 }
