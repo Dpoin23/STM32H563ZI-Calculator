@@ -21,6 +21,7 @@
 #define RCC_AHB2ENR (uint32_t*)0x44020C8C
 #define GPIOA_MODER (uint32_t*)0x42020000
 #define GPIOB_MODER (uint32_t*)0x42020400
+#define GPIOC_MODER (uint32_t*)0x42020800
 #define GPIOD_MODER (uint32_t*)0x42020C00
 #define GPIOE_MODER (uint32_t*)0x42021000
 #define GPIOF_MODER (uint32_t*)0x42021400
@@ -28,6 +29,7 @@
 
 #define GPIOA_ODR (uint32_t*)0x42020014
 #define GPIOB_ODR (uint32_t*)0x42020414
+#define GPIOC_ODR (uint32_t*)0x42020814
 #define GPIOD_ODR (uint32_t*)0x42020C14
 #define GPIOE_ODR (uint32_t*)0x42021014
 #define GPIOF_ODR (uint32_t*)0x42021414
@@ -71,6 +73,7 @@ void keypad_init() {
 }
 
 void LCD_init() {
+	*RCC_AHB2ENR |= (1 << 2);
 	*RCC_AHB2ENR |= (1 << 3);
 	*RCC_AHB2ENR |= (1 << 5);
 
@@ -86,6 +89,13 @@ void LCD_init() {
 	*GPIOA_MDOER |= (1 << 10);
 	*GPIOB_MODER &= ~(0xF << 16);
 	*GPIOB_MODER |= (0x5 << 16);
+
+	*GPIOA_MODER &= ~(0x3 << 12);
+	*GPIOA_MODER |= (1 << 12);
+	*GPIOC_MODER &= ~(0x3 << 0);
+	*GPIOC_MODER |= (1 << 0);
+	*GPIOC_MODER &= ~(0x3 << 6);
+	*GPIOC_MODER |= (1 << 6);
 }
 
 char keypad_response() {
@@ -154,16 +164,45 @@ void blink_n_times(int n) {
 	}
 }
 
+void input_handler(char r, int a, int b, int state) {
+	if (r == '#') {
+		// Move to initial state (clear)
+		state = 0;
+	} else if (state == '1' && r == '*') {
+		//Display
+
+	}
+}
+
+void delay() {
+
+}
+
+void write_to_IR() {
+
+}
+
+void write_to_DR() {
+
+}
+
+void wait_while_busy() {
+
+}
+
 int main(void)
 {
 	keypad_init();
 	LCD_init();
+	int a = 0;
+	int b = 0;
+	int mode = 0;
+	int state = 0;
 
 	for(;;) {
 		char result = keypad_response();
-		if (result == '#') {
-			blink_n_times(5);
+		if (result != ' ') {
+			input_handler(result, &a, &b &state);
 		}
 	}
-
 }
