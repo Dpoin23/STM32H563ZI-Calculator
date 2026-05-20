@@ -31,6 +31,8 @@
  */
 
 #include <stdint.h>
+#include <stdio.h>
+#include <ctype.h>
 
 #define RCC_AHB2ENR (uint32_t*)0x44020C8C
 #define GPIOA_MODER (uint32_t*)0x42020000
@@ -90,19 +92,6 @@ void keypad_init() {
 	*GPIOG_PUPDR |= (1 << 25);
 }
 
-void LCD_init() {
-	*RCC_AHB2ENR |= (1 << 2);
-	*RCC_AHB2ENR |= (1 << 3);
-	*RCC_AHB2ENR |= (1 << 5);
-
-	*GPIOA_MODER &= ~(0x3 << 12);
-	*GPIOA_MODER |= (1 << 12);
-	*GPIOC_MODER &= ~(0x3 << 0);
-	*GPIOC_MODER |= (1 << 0);
-	*GPIOC_MODER &= ~(0x3 << 6);
-	*GPIOC_MODER |= (1 << 6);
-}
-
 void LCD_write_init() {
 	*GPIOF_MODER &= ~(0x3 << 6);
 	*GPIOF_MODER |= (1 << 6);
@@ -118,6 +107,20 @@ void LCD_write_init() {
 	*GPIOB_MODER |= (0x5 << 16);
 }
 
+void LCD_init() {
+	*RCC_AHB2ENR |= (1 << 2);
+	*RCC_AHB2ENR |= (1 << 3);
+	*RCC_AHB2ENR |= (1 << 5);
+
+	*GPIOA_MODER &= ~(0x3 << 12);
+	*GPIOA_MODER |= (1 << 12);
+	*GPIOC_MODER &= ~(0x3 << 0);
+	*GPIOC_MODER |= (1 << 0);
+	*GPIOC_MODER &= ~(0x3 << 6);
+	*GPIOC_MODER |= (1 << 6);
+	LCD_write_init();
+}
+
 void LCD_read_init() {
 	*GPIOF_MODER &= ~(0x3 << 6);
 	*GPIOD_MODER &= ~(0xF << 28);
@@ -127,16 +130,39 @@ void LCD_read_init() {
 	*GPIOB_MODER &= ~(0xF << 16);
 }
 
+void wait_while_busy() {
+	LCD_read_init();
+	*GPIOA_ODR &= ~(1 << 6);
+	*GPIOC_ODR |= (1 << 0);
+	while (1) {
+		*GPIOC_ODR |= (1 << 3);
+		for (int i = 0; i < 50; ++i);
+
+		if (!(*GPIOF_IDR & (1 << 3))) {
+			*GPIOC_ODR &= ~(1 << 3);
+			break;
+		}
+
+		*GPIOC_ODR &= ~(1 << 3);
+	}
+	LCD_write_init();
+}
+
+
 char keypad_response() {
 	// First Row | 1 | 2 | 3 | A |
 	*GPIOB_ODR |= (1 << 7);
 	if (*GPIOE_IDR & (1 << 14)) {
+		*GPIOB_ODR &= ~(1 << 7);
 		return '1';
 	} else if (*GPIOE_IDR & (1 << 11)) {
+		*GPIOB_ODR &= ~(1 << 7);
 		return '2';
 	} else if (*GPIOE_IDR & (1 << 9)) {
+		*GPIOB_ODR &= ~(1 << 7);
 		return '3';
 	} else if (*GPIOG_IDR & (1 << 12)) {
+		*GPIOB_ODR &= ~(1 << 7);
 		return 'A';
 	}
 	*GPIOB_ODR &= ~(1 << 7);
@@ -144,12 +170,16 @@ char keypad_response() {
 	// Second Row | 4 | 5 | 6 | B |
 	*GPIOB_ODR |= (1 << 6);
 	if (*GPIOE_IDR & (1 << 14)) {
+		*GPIOB_ODR &= ~(1 << 6);
 		return '4';
 	} else if (*GPIOE_IDR & (1 << 11)) {
+		*GPIOB_ODR &= ~(1 << 6);
 		return '5';
 	} else if (*GPIOE_IDR & (1 << 9)) {
+		*GPIOB_ODR &= ~(1 << 6);
 		return '6';
 	} else if (*GPIOG_IDR & (1 << 12)) {
+		*GPIOB_ODR &= ~(1 << 6);
 		return 'B';
 	}
 	*GPIOB_ODR &= ~(1 << 6);
@@ -157,12 +187,16 @@ char keypad_response() {
 	// Third Row | 7 | 8 | 9 | C |
 	*GPIOG_ODR |= (1 << 14);
 	if (*GPIOE_IDR & (1 << 14)) {
+		*GPIOG_ODR &= ~(1 << 14);
 		return '7';
 	} else if (*GPIOE_IDR & (1 << 11)) {
+		*GPIOG_ODR &= ~(1 << 14);
 		return '8';
 	} else if (*GPIOE_IDR & (1 << 9)) {
+		*GPIOG_ODR &= ~(1 << 14);
 		return '9';
 	} else if (*GPIOG_IDR & (1 << 12)) {
+		*GPIOG_ODR &= ~(1 << 14);
 		return 'C';
 	}
 	*GPIOG_ODR &= ~(1 << 14);
@@ -170,17 +204,21 @@ char keypad_response() {
 	// Fourth Row | * | 0 | # | D |
 	*GPIOE_ODR |= (1 << 13);
 	if (*GPIOE_IDR & (1 << 14)) {
+		*GPIOE_ODR &= ~(1 << 13);
 		return '*';
 	} else if (*GPIOE_IDR & (1 << 11)) {
+		*GPIOE_ODR &= ~(1 << 13);
 		return '0';
 	} else if (*GPIOE_IDR & (1 << 9)) {
+		*GPIOE_ODR &= ~(1 << 13);
 		return '#';
 	} else if (*GPIOG_IDR & (1 << 12)) {
+		*GPIOE_ODR &= ~(1 << 13);
 		return 'D';
 	}
 	*GPIOE_ODR &= ~(1 << 13);
 
-	return '';
+	return '-';
 }
 
 void blink_n_times(int n) {
@@ -193,22 +231,23 @@ void blink_n_times(int n) {
 	}
 }
 
-void input_handler(char r, int a, int b, int state, int mode) {
-	if (r == '#') {
-		// Move to initial state (clear)
-		state = 0;
-	} else if (state == '1' && r == '*') {
-		//Display
-
+int length(int num) {
+	int result = 0;
+	while (num > 0) {
+		result += 1;
+		num /= 10;
 	}
+	return result;
 }
 
 void delay() {
-
+	for (int i = 0; i < 50000; ++i);
 }
 
 void pulse() {
-
+	*GPIOC_ODR |= (1 << 3);
+	for (int i = 0; i < 5000; ++i);
+	*GPIOC_ODR &= ~(1 << 3);
 }
 
 void clear_bus() {
@@ -235,6 +274,8 @@ void write_to_IR(int rw, int db7, int db6, int db5, int db4, int db3, int db2, i
 	*GPIOA_ODR |= (db2 << 5);
 	*GPIOB_ODR |= (db1 << 9);
 	*GPIOB_ODR |= (db0 << 8);
+	pulse();
+	wait_while_busy();
 }
 
 void write_to_DR(int rw, int db7, int db6, int db5, int db4, int db3, int db2, int db1, int db0) {
@@ -249,28 +290,121 @@ void write_to_DR(int rw, int db7, int db6, int db5, int db4, int db3, int db2, i
 	*GPIOA_ODR |= (db2 << 5);
 	*GPIOB_ODR |= (db1 << 9);
 	*GPIOB_ODR |= (db0 << 8);
+	pulse();
+	wait_while_busy();
 }
 
-void wait_while_busy() {
-	LCD_read_init();
-	*GPIOA_ODR &= ~(1 << 6);
-	*GPIOC_ODR |= (1 << 0);
-	while (1) {
-		*GPIOC_ODR |= (1 << 3);
-
-		if (!(*GPIOF_IDR & (1 << 3))) {
-			break;
-		}
-
-		*GPIOC_ODR &= ~(1 << 3);
+void display_num(int num) {
+	if (num == 0) {
+		write_to_DR(0, 0, 0, 1, 1, 0, 0, 0, 0);
+	} else if (num == 1) {
+		write_to_DR(0, 0, 0, 1, 1, 0, 0, 0, 1);
+	} else if (num == 2) {
+		write_to_DR(0, 0, 0, 1, 1, 0, 0, 1, 0);
+	} else if (num == 3) {
+		write_to_DR(0, 0, 0, 1, 1, 0, 0, 1, 1);
+	} else if (num == 4) {
+		write_to_DR(0, 0, 0, 1, 1, 0, 1, 0, 0);
+	} else if (num == 5) {
+		write_to_DR(0, 0, 0, 1, 1, 0, 1, 0, 1);
+	} else if (num == 6) {
+		write_to_DR(0, 0, 0, 1, 1, 0, 1, 1, 0);
+	} else if (num == 7) {
+		write_to_DR(0, 0, 0, 1, 1, 0, 1, 1, 1);
+	} else if (num == 8) {
+		write_to_DR(0, 0, 0, 1, 1, 1, 0, 0, 0);
+	} else if (num == 9) {
+		write_to_DR(0, 0, 0, 1, 1, 1, 0, 0, 1);
 	}
-	LCD_write_init();
+}
+
+void display(int num) {
+	if (num <= 9 && num >= 0) {
+		display_num(num);
+	} else {
+		display(num / 10);
+		display_num(num % 10);
+	}
+}
+
+void setup() {
+	for (int i = 0; i < 4000000; ++i);
+	clear_bus();
+	*GPIOF_ODR |= (1 << 3);
+	*GPIOD_ODR |= (1 << 15);
+	*GPIOD_ODR |= (1 << 14);
+	pulse();
+	for (int i = 0; i < 200000; ++i);
+	pulse();
+	for (int i = 0; i < 10000; ++i);
+
+	write_to_IR(0, 0, 0, 1, 1, 1, 0, 0, 0); // Function set
+	delay();
+	write_to_IR(0, 0, 0, 0, 0, 1, 1, 0, 0); // Display on/off
+	delay();
+	write_to_IR(0, 0, 0, 0, 0, 0, 0, 0, 1); // clear
+	delay();
+	write_to_IR(0, 0, 0, 0, 0, 0, 1, 1, 0); // Entry mode set
+	delay();
+	write_to_IR(0, 1, 0, 0, 0, 0, 0, 0, 0); // Set cursor line 1
+	delay();
+}
+
+void input_handler(char r, int *a, int *b, int *state, int *mode) {
+	if (r == '#') {
+		write_to_IR(0, 0, 0, 0, 0, 0, 0, 0, 1); // clear
+		*state = 0;
+		*a = 0;
+		*b = 0;
+	} else if (*state == 1 && r == '*') {
+		write_to_IR(0, 0, 0, 0, 0, 0, 0, 0, 1); // clear
+		write_to_IR(0, 1, 1, 0, 0, 0, 0, 0, 0); // cursor bottom
+		display((*a) * (*b));
+		*state = 2;
+		*a = 0;
+		*b = 0;
+	} else if (*state == 0 && r == '*') {
+		write_to_IR(0, 0, 0, 0, 0, 0, 0, 0, 1); // clear
+		*state = 1;
+	} else if (isdigit(r)) {
+		if (*state == 1) {
+			*b *= 10;
+			*b += (r - '0');
+			if (length(*b) == 8) {
+				write_to_IR(0, 0, 0, 0, 0, 0, 0, 0, 1); // clear
+				write_to_IR(0, 1, 1, 0, 0, 0, 0, 0, 0); // cursor bottom
+				display((*a) * (*b)); // display
+				*state = 0;
+				*a = 0;
+				*b = 0;
+			} else {
+				display(r - '0');
+			}
+		} else if (*state == 2) {
+			write_to_IR(0, 0, 0, 0, 0, 0, 0, 0, 1); // clear
+			write_to_IR(0, 1, 0, 0, 0, 0, 0, 0, 0); // cursor top
+			display(r - '0');
+			*state = 0;
+			*a = (r - '0');
+		} else if (*state == 0) {
+			*a *= 10;
+			*a += (r - '0');
+			if (length(*a) == 8) {
+				*state = 1;
+				write_to_IR(0, 0, 0, 0, 0, 0, 0, 0, 1); // clear
+				write_to_IR(0, 1, 0, 0, 0, 0, 0, 0, 0); // Set cursor line 1
+			} else {
+				display(r - '0');
+			}
+		}
+	}
 }
 
 int main(void)
 {
 	keypad_init();
 	LCD_init();
+	setup();
 	int a = 0;
 	int b = 0;
 	int mode = 0;
@@ -278,8 +412,11 @@ int main(void)
 
 	for(;;) {
 		char result = keypad_response();
-		if (result != ' ') {
-			input_handler(result, &a, &b &state, &mode);
+		if (result != '-') {
+			input_handler(result, &a, &b, &state, &mode);
+			for (int i = 0; i < 200000; ++i);
+			while (keypad_response() != '-');
+			for (int i = 0; i < 200000; ++i);
 		}
 	}
 }
