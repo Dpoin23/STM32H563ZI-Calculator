@@ -16,6 +16,20 @@
  ******************************************************************************
  */
 
+/*
+ * RS PA6
+ * RW PC0
+ * E PC3
+ * DB7 PF3
+ * DB6 PD15
+ * DB5 PD14
+ * DB4 PB5
+ * DB3 PG9
+ * DB2 PA5
+ * DB1 PB9
+ * DB0 PB8
+ */
+
 #include <stdint.h>
 
 #define RCC_AHB2ENR (uint32_t*)0x44020C8C
@@ -35,7 +49,11 @@
 #define GPIOF_ODR (uint32_t*)0x42021414
 #define GPIOG_ODR (uint32_t*)0x42021814
 
+#define GPIOA_IDR (uint32_t*)0x42020010
+#define GPIOB_IDR (uint32_t*)0x42020410
+#define GPIOD_IDR (uint32_t*)0x42020C10
 #define GPIOE_IDR (uint32_t*)0x42021010
+#define GPIOF_IDR (uint32_t*)0x42021410
 #define GPIOG_IDR (uint32_t*)0x42021810
 
 #define GPIOE_PUPDR (uint32_t*)0x4202100C
@@ -77,6 +95,15 @@ void LCD_init() {
 	*RCC_AHB2ENR |= (1 << 3);
 	*RCC_AHB2ENR |= (1 << 5);
 
+	*GPIOA_MODER &= ~(0x3 << 12);
+	*GPIOA_MODER |= (1 << 12);
+	*GPIOC_MODER &= ~(0x3 << 0);
+	*GPIOC_MODER |= (1 << 0);
+	*GPIOC_MODER &= ~(0x3 << 6);
+	*GPIOC_MODER |= (1 << 6);
+}
+
+void LCD_write_init() {
 	*GPIOF_MODER &= ~(0x3 << 6);
 	*GPIOF_MODER |= (1 << 6);
 	*GPIOD_MODER &= ~(0xF << 28);
@@ -86,16 +113,18 @@ void LCD_init() {
 	*GPIOG_MODER &= ~(0x3 << 18);
 	*GPIOG_MODER |= (1 << 18);
 	*GPIOA_MODER &= ~(0x3 << 10);
-	*GPIOA_MDOER |= (1 << 10);
+	*GPIOA_MODER |= (1 << 10);
 	*GPIOB_MODER &= ~(0xF << 16);
 	*GPIOB_MODER |= (0x5 << 16);
+}
 
-	*GPIOA_MODER &= ~(0x3 << 12);
-	*GPIOA_MODER |= (1 << 12);
-	*GPIOC_MODER &= ~(0x3 << 0);
-	*GPIOC_MODER |= (1 << 0);
-	*GPIOC_MODER &= ~(0x3 << 6);
-	*GPIOC_MODER |= (1 << 6);
+void LCD_read_init() {
+	*GPIOF_MODER &= ~(0x3 << 6);
+	*GPIOD_MODER &= ~(0xF << 28);
+	*GPIOB_MODER &= ~(0x3 << 10);
+	*GPIOG_MODER &= ~(0x3 << 18);
+	*GPIOA_MODER &= ~(0x3 << 10);
+	*GPIOB_MODER &= ~(0xF << 16);
 }
 
 char keypad_response() {
@@ -164,7 +193,7 @@ void blink_n_times(int n) {
 	}
 }
 
-void input_handler(char r, int a, int b, int state) {
+void input_handler(char r, int a, int b, int state, int mode) {
 	if (r == '#') {
 		// Move to initial state (clear)
 		state = 0;
@@ -178,16 +207,64 @@ void delay() {
 
 }
 
-void write_to_IR() {
+void pulse() {
 
 }
 
-void write_to_DR() {
+void clear_bus() {
+	*GPIOA_ODR &= ~(1 << 6);
+	*GPIOC_ODR &= ~(1 << 0);
+	*GPIOF_ODR &= ~(1 << 3);
+	*GPIOD_ODR &= ~(1 << 15);
+	*GPIOD_ODR &= ~(1 << 14);
+	*GPIOB_ODR &= ~(1 << 5);
+	*GPIOG_ODR &= ~(1 << 9);
+	*GPIOA_ODR &= ~(1 << 5);
+	*GPIOB_ODR &= ~(1 << 9);
+	*GPIOB_ODR &= ~(1 << 8);
+}
 
+void write_to_IR(int rw, int db7, int db6, int db5, int db4, int db3, int db2, int db1, int db0) {
+	clear_bus();
+	*GPIOC_ODR |= (rw << 0);
+	*GPIOF_ODR |= (db7 << 3);
+	*GPIOD_ODR |= (db6 << 15);
+	*GPIOD_ODR |= (db5 << 14);
+	*GPIOB_ODR |= (db4 << 5);
+	*GPIOG_ODR |= (db3 << 9);
+	*GPIOA_ODR |= (db2 << 5);
+	*GPIOB_ODR |= (db1 << 9);
+	*GPIOB_ODR |= (db0 << 8);
+}
+
+void write_to_DR(int rw, int db7, int db6, int db5, int db4, int db3, int db2, int db1, int db0) {
+	clear_bus();
+	*GPIOA_ODR |= (1 << 6);
+	*GPIOC_ODR |= (rw << 0);
+	*GPIOF_ODR |= (db7 << 3);
+	*GPIOD_ODR |= (db6 << 15);
+	*GPIOD_ODR |= (db5 << 14);
+	*GPIOB_ODR |= (db4 << 5);
+	*GPIOG_ODR |= (db3 << 9);
+	*GPIOA_ODR |= (db2 << 5);
+	*GPIOB_ODR |= (db1 << 9);
+	*GPIOB_ODR |= (db0 << 8);
 }
 
 void wait_while_busy() {
+	LCD_read_init();
+	*GPIOA_ODR &= ~(1 << 6);
+	*GPIOC_ODR |= (1 << 0);
+	while (1) {
+		*GPIOC_ODR |= (1 << 3);
 
+		if (!(*GPIOF_IDR & (1 << 3))) {
+			break;
+		}
+
+		*GPIOC_ODR &= ~(1 << 3);
+	}
+	LCD_write_init();
 }
 
 int main(void)
@@ -202,7 +279,7 @@ int main(void)
 	for(;;) {
 		char result = keypad_response();
 		if (result != ' ') {
-			input_handler(result, &a, &b &state);
+			input_handler(result, &a, &b &state, &mode);
 		}
 	}
 }
