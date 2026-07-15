@@ -1,6 +1,8 @@
 # STM32H563ZI Calculator
 
-## Description: This project is an embedded calculator built around the STM32H563ZI NUCLEO development board. It supports arithmetic on 8-digit positive integers using a 4×4 matrix keypad for input and a 16×2 character LCD for output. The calculator performs the four basic arithmetic operations—addition, non-negative subtraction, multiplication, and integer division—through dedicated keypad buttons while displaying results in real time on the LCD. The documentation below includes the keypad layout, operation mappings, GPIO pin assignments, power wiring information, and a complete bill of materials with links to the components used. Although the listed components were purchased from Mouser Electronics, equivalent parts from other suppliers can also be used.
+## Description:
+
+This project is an embedded calculator built around the STM32H563ZI NUCLEO development board. It supports arithmetic on 8-digit positive integers using a 4×4 matrix keypad for input and a 16×2 character LCD for output. The calculator performs the four basic arithmetic operations—addition, non-negative subtraction, multiplication, and integer division—through dedicated keypad buttons while displaying results in real time on the LCD. The documentation below includes the keypad layout, operation mappings, GPIO pin assignments, power wiring information, and a complete bill of materials with links to the components used. Although the listed components were purchased from Mouser Electronics, equivalent parts from other suppliers can also be used.
 
 ---
 
