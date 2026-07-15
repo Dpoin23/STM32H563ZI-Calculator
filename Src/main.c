@@ -221,16 +221,6 @@ char keypad_response() {
 	return '-';
 }
 
-void blink_n_times(int n) {
-	for (int i = 0; i < n; ++i) {
-		*GPIOA_ODR |= (1 << 6);
-		for (int i = 0; i < 1000000; ++i);
-
-		*GPIOA_ODR &= ~(1 << 6);
-		for (int i = 0; i < 1000000; ++i);
-	}
-}
-
 int length(int num) {
 	int result = 0;
 	while (num > 0) {
@@ -356,7 +346,18 @@ void input_handler(char r, int *a, int *b, int *state, int *mode) {
 		*state = 0;
 		*a = 0;
 		*b = 0;
-	} else if (*state == 1 && r == '*') {
+	} else if (*state == 1 && r == 'A' && *mode == 0) {
+		write_to_IR(0, 0, 0, 0, 0, 0, 0, 0, 1); // clear
+		write_to_IR(0, 1, 1, 0, 0, 0, 0, 0, 0); // cursor bottom
+		display((*a) + (*b));
+		*state = 2;
+		*a = 0;
+		*b = 0;
+	} else if (*state == 0 && r == 'A') {
+		write_to_IR(0, 0, 0, 0, 0, 0, 0, 0, 1); // clear
+		*mode = 0;
+		*state = 1;
+	} else if (*state == 1 && r == '*' && *mode == 2) {
 		write_to_IR(0, 0, 0, 0, 0, 0, 0, 0, 1); // clear
 		write_to_IR(0, 1, 1, 0, 0, 0, 0, 0, 0); // cursor bottom
 		display((*a) * (*b));
@@ -365,6 +366,7 @@ void input_handler(char r, int *a, int *b, int *state, int *mode) {
 		*b = 0;
 	} else if (*state == 0 && r == '*') {
 		write_to_IR(0, 0, 0, 0, 0, 0, 0, 0, 1); // clear
+		*mode = 2;
 		*state = 1;
 	} else if (isdigit(r)) {
 		if (*state == 1) {
@@ -373,7 +375,8 @@ void input_handler(char r, int *a, int *b, int *state, int *mode) {
 			if (length(*b) == 8) {
 				write_to_IR(0, 0, 0, 0, 0, 0, 0, 0, 1); // clear
 				write_to_IR(0, 1, 1, 0, 0, 0, 0, 0, 0); // cursor bottom
-				display((*a) * (*b)); // display
+				if (*mode == 0) { display((*a) + (*b)); }
+				else if (*mode == 2) { display((*a) * (*b)); }
 				*state = 0;
 				*a = 0;
 				*b = 0;
@@ -385,12 +388,14 @@ void input_handler(char r, int *a, int *b, int *state, int *mode) {
 			write_to_IR(0, 1, 0, 0, 0, 0, 0, 0, 0); // cursor top
 			display(r - '0');
 			*state = 0;
+			*mode = 2;
 			*a = (r - '0');
 		} else if (*state == 0) {
 			*a *= 10;
 			*a += (r - '0');
 			if (length(*a) == 8) {
 				*state = 1;
+				*mode = 2;
 				write_to_IR(0, 0, 0, 0, 0, 0, 0, 0, 1); // clear
 				write_to_IR(0, 1, 0, 0, 0, 0, 0, 0, 0); // Set cursor line 1
 			} else {
@@ -407,6 +412,10 @@ int main(void)
 	setup();
 	int a = 0;
 	int b = 0;
+	// 0 | A | add
+	// 1 | C | subtract
+	// 2 | * | multiply | default
+	// 3 | D | divide
 	int mode = 0;
 	int state = 0;
 
