@@ -357,6 +357,18 @@ void input_handler(char r, int *a, int *b, int *state, int *mode) {
 		write_to_IR(0, 0, 0, 0, 0, 0, 0, 0, 1); // clear
 		*mode = 0;
 		*state = 1;
+	} else if (*state == 1 && r == 'C' && *mode == 1) {
+		write_to_IR(0, 0, 0, 0, 0, 0, 0, 0, 1); // clear
+		write_to_IR(0, 1, 1, 0, 0, 0, 0, 0, 0); // cursor bottom
+		display((*a) - (*b));
+		*mode = 2;
+		*state = 2;
+		*a = 0;
+		*b = 0;
+	} else if (*state == 0 && r == 'C') {
+		write_to_IR(0, 0, 0, 0, 0, 0, 0, 0, 1); // clear
+		*mode = 1;
+		*state = 1;
 	} else if (*state == 1 && r == '*' && *mode == 2) {
 		write_to_IR(0, 0, 0, 0, 0, 0, 0, 0, 1); // clear
 		write_to_IR(0, 1, 1, 0, 0, 0, 0, 0, 0); // cursor bottom
@@ -368,6 +380,18 @@ void input_handler(char r, int *a, int *b, int *state, int *mode) {
 		write_to_IR(0, 0, 0, 0, 0, 0, 0, 0, 1); // clear
 		*mode = 2;
 		*state = 1;
+	} else if (*state == 1 && r == 'D' && *mode == 3) {
+		write_to_IR(0, 0, 0, 0, 0, 0, 0, 0, 1); // clear
+		write_to_IR(0, 1, 1, 0, 0, 0, 0, 0, 0); // cursor bottom
+		display((*a) / (*b));
+		*mode = 2;
+		*state = 2;
+		*a = 0;
+		*b = 0;
+	} else if (*state == 0 && r == 'D') {
+		write_to_IR(0, 0, 0, 0, 0, 0, 0, 0, 1); // clear
+		*mode = 3;
+		*state = 1;
 	} else if (isdigit(r)) {
 		if (*state == 1) {
 			*b *= 10;
@@ -376,7 +400,9 @@ void input_handler(char r, int *a, int *b, int *state, int *mode) {
 				write_to_IR(0, 0, 0, 0, 0, 0, 0, 0, 1); // clear
 				write_to_IR(0, 1, 1, 0, 0, 0, 0, 0, 0); // cursor bottom
 				if (*mode == 0) { display((*a) + (*b)); }
+				else if (*mode == 1) { display((*a) - (*b)); }
 				else if (*mode == 2) { display((*a) * (*b)); }
+				else if (*mode == 3) { display((*a) / (*b)); }
 				*state = 0;
 				*a = 0;
 				*b = 0;
