@@ -1,6 +1,6 @@
 # STM32H563ZI Calculator
 
-## Description:
+## Description
 
 This project is an embedded calculator built around the STM32H563ZI NUCLEO development board. It supports arithmetic on 8-digit positive integers using a 4×4 matrix keypad for input and a 16×2 character LCD for output. The calculator performs the four basic arithmetic operations—addition, non-negative subtraction, multiplication, and integer division—through dedicated keypad buttons while displaying results in real time on the LCD. The documentation below includes the keypad layout, operation mappings, GPIO pin assignments, power wiring information, and a complete bill of materials with links to the components used. Although the listed components were purchased from Mouser Electronics, equivalent parts from other suppliers can also be used.
 
@@ -79,11 +79,11 @@ The output from the voltage regulator is wired to both the potentiometer and the
 - [Potentiometer](https://www.mouser.com/en/ProductDetail/Bourns/3352T-1-103LF?qs=EYTJzGwugUoW6t2SAeQ12A%3D%3D)
 - [Battery](https://www.mouser.com/en/ProductDetail/Panasonic-Battery/6LF22XWA-B12?qs=8uu3sA0mUdvMhS%2FBFiaz%252BQ%3D%3D)
 - [Breadboard](https://www.mouser.com/en/ProductDetail/BusBoard-Prototype-Systems/BB830?qs=VEfmQw3KOauhPeTwYxNCaA%3D%3D)
-- [Capacitors](https://www.mouser.com/en/ProductDetail/KEMET/T350A104K035AT?qs=O4djsYW3GvYvdg%2Fd42QtNw%3D%3D) (Optional)
+- [Capacitors](https://www.mouser.com/en/ProductDetail/KEMET/T350A104K035AT?qs=O4djsYW3GvYvdg%2Fd42QtNw%3D%3D) (Optional, for use in conjunction with the voltage regulator)
 
 ---
 
-## Notes: 
+## Notes
 
 - All parts were purchased from mouser electronics and the links above reflect that, the same or similar parts may be available for purchase from other sources.
 - Mouser does not sell an LCD display that has pre-connected header pins, the headers & wire housing would need to be soldered onto the LCD display.
